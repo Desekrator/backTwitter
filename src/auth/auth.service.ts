@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EncodeService } from './enconde.service';
@@ -11,6 +11,7 @@ import { ActivateUserDto } from './dto/activate-user.dto';
 import { User } from './user.entity';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -63,22 +64,31 @@ export class AuthService {
 
     }
 
-    async requestResetPassword(requestResetPasswordDto: RequestResetPasswordDto): Promise<void> 
-    {
+    async requestResetPassword(requestResetPasswordDto: RequestResetPasswordDto): Promise<void> {
         const { email } = requestResetPasswordDto;
         const user: User = await this.userRepository.findOneByEmail(email);
         user.resetPasswordToken = uuidv4();
         this.userRepository.save(user);
     }
 
-    async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> 
-    {
+    async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
         const { resetPasswordToken, password } = resetPasswordDto;
         const user: User = await this.userRepository.findOneByResetPasswordToken(resetPasswordToken);
         user.password = await this.encodeService.encodePassword(password);
         user.resetPasswordToken = null;
         this.userRepository.save(user);
-        
+
+    }
+
+    async changePassword(changePasswordDto: ChangePasswordDto, user: User): Promise<void> {
+        const { oldPassword, newPassword } = changePasswordDto;
+        if (await this.encodeService.checkPassword(oldPassword, user.password)) {
+            user.password = await this.encodeService.encodePassword(newPassword);
+            this.userRepository.save(user)
+        } else {
+            throw new BadRequestException('old password does not match');
+        }
+
     }
 
 }
