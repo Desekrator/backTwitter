@@ -52,7 +52,7 @@ export class AuthController {
     changePassword(
         @Body() changePasswordDto: ChangePasswordDto,
         @GetUser() user: User
-    ): Promise<void> {
+    ): Promise<string | void> {
 
         return this.authService.changePassword(changePasswordDto, user);
 

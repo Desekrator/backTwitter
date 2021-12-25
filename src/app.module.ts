@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { TuitsController } from './tuits/tuits.controller';
+import { TuitsRepository } from './tuits/tuits.repository';
+import { TuitsService } from './tuits/tuits.service';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -14,8 +16,11 @@ import { TuitsController } from './tuits/tuits.controller';
     database: 'nestjs',
     autoLoadEntities: true,
     synchronize: true,
-  }), AuthModule],
+  }), AuthModule,
+  TypeOrmModule.forFeature([TuitsRepository])
+
+  ],
   controllers: [TuitsController],
-  providers: [AppService],
+  providers: [AppService, TuitsService],
 })
 export class AppModule { }

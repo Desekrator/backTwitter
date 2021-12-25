@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Tuit } from "src/tuits/tuit.entity";
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class User {
@@ -26,4 +27,6 @@ export class User {
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
+    @OneToMany(() => Tuit, tuit => tuit.user)
+    tuits: Tuit[];
 }
