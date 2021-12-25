@@ -1,5 +1,5 @@
 import { User } from "src/auth/user.entity";
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Tuit {
@@ -12,6 +12,7 @@ export class Tuit {
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
-    @ManyToOne(() => User, (user) => user.tuits)
+    @ManyToOne(() => User, (user) => user.tuits, {cascade: true})
+    @JoinColumn({ name: 'user_id' })
     user: User;
 }

@@ -10,11 +10,11 @@ import { Tuit } from "./tuit.entity";
 export class TuitsRepository extends Repository<Tuit> {
 
     async findAllTuits(): Promise<Tuit[] | void> {
-        return await this.find();
+        return await this.find({ relations: ['user'] });
     }
 
     async findTuit(id): Promise<Tuit | void> {
-        return await this.findOne(id);
+        return await this.findOne(id, { relations: ['user'] });
     }
 
 

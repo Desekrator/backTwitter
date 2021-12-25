@@ -18,7 +18,7 @@ export class TuitsService {
 
     async getTuits(): Promise<Tuit[] | void> {
 
-        return this.tuitsRepository.findAllTuits()
+        return this.tuitsRepository.findAllTuits();
 
     }
 
