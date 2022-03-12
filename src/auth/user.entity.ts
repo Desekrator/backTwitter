@@ -1,32 +1,43 @@
-import { Tuit } from "src/tuits/tuit.entity";
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Tuit } from 'src/tuits/tuit.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column({ length: 20 })
-    name: string;
+  @Column({ length: 20 })
+  name: string;
 
-    @Column({ length: 100, unique: true })
-    email: string;
+  @Column({ length: 100, unique: true })
+  email: string;
 
-    @Column({ length: 100 })
-    password: string;
+  @Column({ length: 100 })
+  password: string;
 
-    @Column({ type: 'boolean', default: false })
-    active: boolean;
+  @Column({ type: 'boolean', default: false })
+  active: boolean;
 
-    @Column({ type: 'uuid', unique: true, name: 'activation_token' })
-    activationToken: string;
+  @Column({ type: 'uuid', unique: true, name: 'activation_token' })
+  activationToken: string;
 
-    @Column({ type: 'uuid', unique: true, name: 'reset_password_token', nullable: true })
-    resetPasswordToken: string;
+  @Column({
+    type: 'uuid',
+    unique: true,
+    name: 'reset_password_token',
+    nullable: true,
+  })
+  resetPasswordToken: string;
 
-    @CreateDateColumn({ name: 'created_at' })
-    createdAt: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-    @OneToMany(() => Tuit, tuit => tuit.user)
-    tuits: Tuit[];
+  @OneToMany(() => Tuit, (tuit) => tuit.user)
+  tuits: Tuit[];
 }

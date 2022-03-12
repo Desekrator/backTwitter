@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EncodeService } from './enconde.service';
@@ -15,80 +20,92 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
+  constructor(
+    @InjectRepository(UserRepository)
+    private userRepository: UserRepository,
+    private encodeService: EncodeService,
+    private jwtService: JwtService,
+  ) {}
 
-    constructor(
-        @InjectRepository(UserRepository)
-        private userRepository: UserRepository,
-        private encodeService: EncodeService,
-        private jwtService: JwtService,
-    ) { }
+  async registerUser(registerUserDto: RegisterUserDto): Promise<void> {
+    const { name, email, password } = registerUserDto;
+    const hashedPassword = await this.encodeService.encodePassword(password);
 
+    return this.userRepository.createUser(
+      name,
+      email,
+      hashedPassword,
+      uuidv4(),
+    );
+  }
 
+  async loginUser(loginDto: LoginDto): Promise<{ accessToken: string }> {
+    const { email, password } = loginDto;
+    const user = await this.userRepository.findOneByEmail(email);
+    const isPasswordValid = await this.encodeService.checkPassword(
+      password,
+      user.password,
+    );
 
-    async registerUser(registerUserDto: RegisterUserDto): Promise<void> {
-
-        const { name, email, password } = registerUserDto;
-        const hashedPassword = await this.encodeService.encodePassword(password);
-
-
-        return this.userRepository.createUser(name, email, hashedPassword, uuidv4());
+    if (!isPasswordValid || !user) {
+      throw new UnauthorizedException('Check your credentials');
     }
 
-    async loginUser(loginDto: LoginDto): Promise<{ accessToken: string }> {
+    const payload: JwtPayload = {
+      id: user.id,
+      email: user.email,
+      active: user.active,
+    };
 
-        const { email, password } = loginDto;
-        const user = await this.userRepository.findOneByEmail(email);
-        const isPasswordValid = await this.encodeService.checkPassword(password, user.password);
+    const accessToken = await this.jwtService.sign(payload);
 
-        if (!isPasswordValid || !user) {
-            throw new UnauthorizedException('Check your credentials');
-        }
+    return { accessToken };
+  }
 
-        const payload: JwtPayload = { id: user.id, email: user.email, active: user.active };
+  async activateUser(activateUserDto: ActivateUserDto): Promise<void> {
+    const { id, token } = activateUserDto;
+    const user: User =
+      await this.userRepository.findOneInactiveByIdAndAndActivationToken(
+        id,
+        token,
+      );
 
-        const accessToken = await this.jwtService.sign(payload);
-
-        return { accessToken };
-
+    if (!user) {
+      throw new UnprocessableEntityException('Action not allowed');
     }
 
-    async activateUser(activateUserDto: ActivateUserDto): Promise<void> {
-        const { id, token } = activateUserDto;
-        const user: User = await this.userRepository.findOneInactiveByIdAndAndActivationToken(id, token);
+    return this.userRepository.activateUser(user);
+  }
 
-        if (!user) {
-            throw new UnprocessableEntityException('Action not allowed');
-        }
+  async requestResetPassword(
+    requestResetPasswordDto: RequestResetPasswordDto,
+  ): Promise<void> {
+    const { email } = requestResetPasswordDto;
+    const user: User = await this.userRepository.findOneByEmail(email);
+    user.resetPasswordToken = uuidv4();
+    this.userRepository.save(user);
+  }
 
-        return this.userRepository.activateUser(user);
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
+    const { resetPasswordToken, password } = resetPasswordDto;
+    const user: User = await this.userRepository.findOneByResetPasswordToken(
+      resetPasswordToken,
+    );
+    user.password = await this.encodeService.encodePassword(password);
+    user.resetPasswordToken = null;
+    this.userRepository.save(user);
+  }
 
+  async changePassword(
+    changePasswordDto: ChangePasswordDto,
+    user: User,
+  ): Promise<void> {
+    const { oldPassword, newPassword } = changePasswordDto;
+    if (await this.encodeService.checkPassword(oldPassword, user.password)) {
+      user.password = await this.encodeService.encodePassword(newPassword);
+      this.userRepository.save(user);
+    } else {
+      throw new BadRequestException('old password does not match');
     }
-
-    async requestResetPassword(requestResetPasswordDto: RequestResetPasswordDto): Promise<void> {
-        const { email } = requestResetPasswordDto;
-        const user: User = await this.userRepository.findOneByEmail(email);
-        user.resetPasswordToken = uuidv4();
-        this.userRepository.save(user);
-    }
-
-    async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
-        const { resetPasswordToken, password } = resetPasswordDto;
-        const user: User = await this.userRepository.findOneByResetPasswordToken(resetPasswordToken);
-        user.password = await this.encodeService.encodePassword(password);
-        user.resetPasswordToken = null;
-        this.userRepository.save(user);
-
-    }
-
-    async changePassword(changePasswordDto: ChangePasswordDto, user: User): Promise<void> {
-        const { oldPassword, newPassword } = changePasswordDto;
-        if (await this.encodeService.checkPassword(oldPassword, user.password)) {
-            user.password = await this.encodeService.encodePassword(newPassword);
-            this.userRepository.save(user)
-        } else {
-            throw new BadRequestException('old password does not match');
-        }
-
-    }
-
+  }
 }

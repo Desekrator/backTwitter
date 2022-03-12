@@ -7,20 +7,21 @@ import { TuitsRepository } from './tuits/tuits.repository';
 import { TuitsService } from './tuits/tuits.service';
 
 @Module({
-  imports: [TypeOrmModule.forRoot({
-    type: 'mysql',
-    host: 'localhost',
-    port: 3306,
-    username: 'root',
-    password: 'root',
-    database: 'nestjs',
-    autoLoadEntities: true,
-    synchronize: true,
-  }), AuthModule,
-  TypeOrmModule.forFeature([TuitsRepository])
-
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: 'localhost',
+      port: 3306,
+      username: 'root',
+      password: 'root',
+      database: 'nestjs',
+      autoLoadEntities: true,
+      synchronize: true,
+    }),
+    AuthModule,
+    TypeOrmModule.forFeature([TuitsRepository]),
   ],
   controllers: [TuitsController],
   providers: [AppService, TuitsService],
 })
-export class AppModule { }
+export class AppModule {}

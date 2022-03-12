@@ -1,12 +1,10 @@
-import { IsNotEmpty, IsUUID } from "class-validator";
+import { IsNotEmpty, IsUUID } from 'class-validator';
 
 export class ActivateUserDto {
-    
-    @IsNotEmpty()
-    @IsUUID('4')
-    id: string;
+  @IsNotEmpty()
+  @IsUUID('4')
+  id: string;
 
-    
-    @IsNotEmpty()
-    token: string;
+  @IsNotEmpty()
+  token: string;
 }
